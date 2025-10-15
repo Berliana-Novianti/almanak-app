@@ -13,8 +13,14 @@
                     <div>
                         <label for="year" class="block font-medium text-sm text-gray-700">Tahun:</label>
                         <select name="year" id="year" class="border-gray-300 rounded-md shadow-sm mt-1">
-                            @for ($y = now()->year; $y >= 2023; $y--)
-                                <option value="{{ $y }}" {{ $y == $selectedYear ? 'selected' : '' }}>{{ $y }}</option>
+                            @php
+                                $startYear = 2023; // Tahun paling awal yang bisa dipilih
+                                $endYear = 2030;   // Tahun paling akhir sesuai permintaan
+                            @endphp
+                            @for ($y = $endYear; $y >= $startYear; $y--)
+                                <option value="{{ $y }}" {{ $y == $selectedYear ? 'selected' : '' }}>
+                                    {{ $y }}
+                                </option>
                             @endfor
                         </select>
                     </div>

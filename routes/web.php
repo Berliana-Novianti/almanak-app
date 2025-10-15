@@ -72,7 +72,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/galeri-tautan', [SharedLinkController::class, 'index'])->name('galeri-tautan.index');
     Route::post('/galeri-tautan', [SharedLinkController::class, 'store'])->name('galeri-tautan.store');
     Route::delete('/galeri-tautan/{link}', [SharedLinkController::class, 'destroy'])->name('galeri-tautan.destroy');
-    
+    Route::get('/realisasi-kegiatan', [KinerjaController::class, 'index'])->name('kinerja.index');
+    Route::get('/realisasi-kegiatan/export', [KinerjaController::class, 'exportExcel'])->name('kinerja.export');
 });
 
 

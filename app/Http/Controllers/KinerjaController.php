@@ -2,24 +2,29 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Kinerja;
+use App\Models\Kinerja; // Pastikan nama model Anda benar
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
+use App\Exports\KinerjaExport;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Carbon; // Ditambahkan untuk penanganan tanggal
 
 class KinerjaController extends Controller
 {
+    /**
+     * Menampilkan halaman utama Realisasi Kegiatan,
+     * termasuk form tambah dan tabel data milik pengguna.
+     */
     public function index(Request $request)
     {
         $selectedMonth = $request->input('bulan', Carbon::now()->format('Y-m'));
         $date = Carbon::createFromFormat('Y-m', $selectedMonth)->startOfMonth();
 
         $kinerjaBulanan = Kinerja::whereYear('bulan_tahun', $date->year)
-                                  ->whereMonth('bulan_tahun', $date->month)
-                                  ->with('details')
-                                  ->latest()
-                                  ->get();
+                                    ->whereMonth('bulan_tahun', $date->month)
+                                    ->with('details')
+                                    ->latest()
+                                    ->get();
 
         return view('kinerja.index', [
             'kinerjaBulanan' => $kinerjaBulanan,
@@ -83,7 +88,7 @@ class KinerjaController extends Controller
     public function update(Request $request, Kinerja $kinerja)
     {
         $validated = $request->validate([
-            'pelaksana'             => 'required|string|max:255',
+            'pelaksana'              => 'required|string|max:255',
             'deskripsi_pekerjaan'   => 'required|string',
             'realisasi_target'      => 'required|string',
             'progres_kegiatan'      => 'required|string',
@@ -94,6 +99,9 @@ class KinerjaController extends Controller
         return back()->with('success', 'Kegiatan utama berhasil diperbarui.');
     }
 
+    /**
+     * Menghapus data realisasi kegiatan.
+     */
     public function destroy(Kinerja $kinerja)
     {
         foreach ($kinerja->details as $detail) {
@@ -105,5 +113,26 @@ class KinerjaController extends Controller
         $kinerja->delete();
         return redirect()->route('kinerja.index')->with('success', 'Laporan Realisasi Kegiatan berhasil dihapus.');
     }
-    // Fungsi lainnya akan kita tambahkan nanti
+
+    /**
+     * Menangani permintaan ekspor data ke Excel.
+     */
+    public function exportExcel(Request $request)
+    {
+        $request->validate([
+            'year' => 'required|integer|min:2023',
+            'month' => 'required|integer|between:1,12',
+        ]);
+
+        $year = $request->year;
+        $month = $request->month;
+        $user = Auth::user();
+
+        // Buat nama file yang dinamis
+        $fileName = 'Laporan Realisasi - ' . $user->name . ' - ' . \Carbon\Carbon::create()->month($month)->translatedFormat('F') . ' ' . $year . '.xlsx';
+
+        // Panggil kelas KinerjaExport untuk menghasilkan dan mengunduh file
+        return Excel::download(new KinerjaExport($year, $month, $user->id), $fileName);
+    }
 }
+
